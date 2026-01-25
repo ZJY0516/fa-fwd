@@ -1,5 +1,5 @@
 set -e
-source ./set_compile_thread.sh
+
 # set_compile_params
 ####################### Build FA3 #######################
 # Set environment variables to control FlashAttention build options
