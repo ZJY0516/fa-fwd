@@ -8,7 +8,7 @@ This repository bundles the Flash-Attention-3 forward-only kernel and the toolin
 
 ## Prerequisites(same as upstream)
 - **Python**: 3.9 or later
-- **PyTorch**: 2.9.0
+- **PyTorch**: 2.10
 - **Build dependencies**: `ninja`, `packaging`, `wheel`
 
 ## Quick Start
@@ -36,7 +36,7 @@ This repository bundles the Flash-Attention-3 forward-only kernel and the toolin
 
 4. Install the generated wheel (example):
 	```bash
-	pip install flash-attention/hopper/dist/fa3_fwd-0.0.1-cp*-linux_x86_64.whl
+	pip install build/*.whl
 	```
 
 ## Python Usage Example

@@ -1,4 +1,4 @@
-torch==2.9.0
+torch==2.10
 numpy
 packaging
 ninja

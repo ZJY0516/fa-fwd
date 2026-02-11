@@ -32,7 +32,7 @@ cd hopper
 
 mv flash_attn_interface.py fa3_fwd_interface.py
 
-echo "__version__ = \"0.0.1\"" > __init__.py
+echo "__version__ = \"0.0.2\"" > __init__.py
 
 sed -i 's/flash_attn_3/fa3_fwd/g' fa3_fwd_interface.py flash_api_stable.cpp flash_api.cpp
 
