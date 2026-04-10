@@ -15,11 +15,13 @@
 ARG CUDA_VERSION=12.8
 ARG PYTHON_VERSION=3.10
 
-# BuildKit automatically selects architecture based on --platform
-# TARGETARCH = amd64 or arm64
-FROM --platform=$TARGETPLATFORM quay.io/pypa/manylinux_2_28_${TARGETARCH}
+# Map Docker TARGETARCH (amd64/arm64) to manylinux image arch (x86_64/aarch64)
+FROM quay.io/pypa/manylinux_2_28_x86_64 AS base-amd64
+FROM quay.io/pypa/manylinux_2_28_aarch64 AS base-arm64
+FROM base-${TARGETARCH}
 
 # Re-declare ARGs (required after FROM)
+ARG TARGETARCH
 ARG CUDA_VERSION
 ARG PYTHON_VERSION
 
