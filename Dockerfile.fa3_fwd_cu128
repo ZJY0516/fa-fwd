@@ -1,0 +1,30 @@
+FROM quay.io/pypa/manylinux_2_28_aarch64
+
+# Install CUDA 12.8 toolkit
+RUN dnf install -y epel-release && \
+    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/sbsa/cuda-rhel8.repo && \
+    dnf install -y cuda-toolkit-12-8 && \
+    dnf clean all
+
+ENV PATH="/usr/local/cuda-12.8/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:${LD_LIBRARY_PATH}"
+ENV CUDA_HOME="/usr/local/cuda-12.8"
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Create Python 3.10 venv with uv (only cu128 aarch64 torch 2.10 wheel available for cp310)
+RUN uv venv /opt/venv --python 3.10
+ENV PATH="/opt/venv/bin:${PATH}"
+ENV VIRTUAL_ENV="/opt/venv"
+
+# Fix git safe.directory for mounted volumes
+RUN git config --global --add safe.directory '*'
+
+WORKDIR /build/fa-fwd
+COPY requirements.txt .
+# Install torch with CUDA from PyTorch index first, then the rest from PyPI
+RUN uv pip install torch==2.10 --index-url https://download.pytorch.org/whl/cu128 --no-deps && \
+    uv pip install -r requirements.txt && \
+    uv pip install setuptools
