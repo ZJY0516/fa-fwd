@@ -1,7 +1,22 @@
 #!/bin/bash
 set -e
 
-echo "=== Building fa3_fwd wheel for aarch64 ==="
+# Auto-detect architecture
+ARCH=$(uname -m)
+case "$ARCH" in
+    aarch64)
+        PLATFORM_TAG="aarch64"
+        ;;
+    x86_64)
+        PLATFORM_TAG="x86_64"
+        ;;
+    *)
+        echo "Unknown architecture: $ARCH"
+        exit 1
+        ;;
+esac
+
+echo "=== Building fa3_fwd wheel for ${PLATFORM_TAG} ==="
 echo "CUDA: $(nvcc --version | tail -1)"
 echo "Python: $(python --version)"
 echo "PyTorch: $(python -c 'import torch; print(torch.__version__, "cuda:", torch.version.cuda)')"
@@ -17,7 +32,7 @@ auditwheel show build/*.whl
 
 # Rename platform tag to manylinux_2_24
 WHL=$(ls build/*.whl)
-NEWNAME=$(basename "$WHL" | sed 's/linux_aarch64/manylinux_2_24_aarch64/')
+NEWNAME=$(basename "$WHL" | sed "s/linux_${PLATFORM_TAG}/manylinux_2_24_${PLATFORM_TAG}/")
 cp "$WHL" "/output/$NEWNAME"
 
 echo "=== Final wheel ==="
