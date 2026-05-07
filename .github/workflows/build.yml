@@ -1,0 +1,67 @@
+name: Build and Publish Wheels
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: nvidia/cuda:12.8.0-devel-ubuntu22.04
+    steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          git config --global --add safe.directory '*'
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Setup Python and install dependencies
+        run: |
+          uv venv --python 3.12 --seed
+          uv pip install -r requirements.txt --torch-backend=cu128
+      - name: Build wheel
+        env:
+          MAX_JOBS: "2"
+          NVCC_THREADS: "2"
+        run: |
+          . .venv/bin/activate
+          bash build_fa3.sh
+          python -m wheel tags --platform-tag=manylinux_2_34_${{ matrix.arch }} --remove build/*.whl
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.arch }}
+          path: build/*.whl
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      id-token: write
+    steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
